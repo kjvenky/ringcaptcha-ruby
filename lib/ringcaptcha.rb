@@ -31,6 +31,7 @@ module RingCaptcha
     def initialize(app_key, secret_key)
     	@app_key = app_key
     	@secret_key = secret_key
+      @api_key = '6abf3f73b8e9f6b8c3d371d20c9374cfcea769ad'
       @retry_attempts = 0
       @secure = true
       @status = -1
@@ -54,6 +55,21 @@ module RingCaptcha
 
       return RingCaptchaVerification.new(body)
 
+    end
+
+    def sendSms(number, message)
+      data = {:app_key => @secret_key, :api_key => @api_key, :phone => number, :message => message}
+      server = (@secure ? "https://" : "http://") + @@rc_server
+      resource = "#{@app_key}/sms"
+      begin
+        response = verify_rest_call(server, resource, data)
+        body = JSON.parse(response.body)
+        @status = response.class.name == "Net::HTTPOK" ? body['status'] == "SUCCESS" : 0
+      rescue => e
+        @status = 0
+        @message = e.message 
+        return false
+      end
     end
 
   private
